@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Combinations</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: whitesmoke;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 50%;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 0.2rem;
+      font-size: 1rem;
+      display: block;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #555;
+    }
+
+    .output {
+      margin-top: 2rem;
+      text-align: left;
+    }
+
+    .output h2 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .output ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 15rem;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 0.25rem;
+      background-color: #f8f9fa;
+    }
+
+    .output li {
+      padding: 0.75rem;
+      border-bottom: 1px solid #ddd;
+      color: #333;
+    }
+
+    .output li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Combinations</h1>
+    <form id="generateForm">
+      <label for="items">Items:</label>
+      <input type="text" id="items" name="items" value="<%= items %>" required placeholder="e.g., 1, 2, 3, 4, 5">
+      <div id="itemsError" class="error-message"></div>
+      
+      <label for="length">Length:</label>
+      <input type="number" id="length" name="length" value="<%= length %>" required placeholder="e.g., 3">
+      <div id="lengthError" class="error-message"></div>
+      
+      <button type="submit">Generate</button>
+    </form>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <div class="output" id="outputSection" style="display: none;">
+      <h2>Output</h2>
+      <ul id="outputList"></ul>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("generateForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      document.getElementById("itemsError").style.display = "none";
+      document.getElementById("lengthError").style.display = "none";
+
+      const itemsInput = document.getElementById("items").value.trim();
+      const lengthInput = document.getElementById("length").value.trim();
+
+      const items = itemsInput.split(",").map(item => parseFloat(item.trim()));
+      const length = parseFloat(lengthInput);
+
+      if (items.some(isNaN)) {
+        document.getElementById("itemsError").textContent = "Please enter valid numbers.";
+        document.getElementById("itemsError").style.display = "block";
+        return;
+      }
+
+      if (isNaN(length) || length <= 0 || !Number.isInteger(length)) {
+        document.getElementById("lengthError").textContent = "Length must be a positive integer.";
+        document.getElementById("lengthError").style.display = "block";
+        return;
+      }
+
+      if (length > items.length) {
+        document.getElementById("lengthError").textContent = "Length cannot exceed the number of items.";
+        document.getElementById("lengthError").style.display = "block";
+        return;
+      }
+
+      try {
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ items, length }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Server returned an error.");
+        }
+
+        const data = await response.json();
+
+        const outputSection = document.getElementById("outputSection");
+        const outputList = document.getElementById("outputList");
+
+        outputList.innerHTML = "";
+
+        if (Array.isArray(data.result)) {
+          data.result.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            outputList.appendChild(li);
+          });
+        }
+
+        outputSection.style.display = "block";
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("itemsError").textContent = "An error occurred. Please try again.";
+        document.getElementById("itemsError").style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
