@@ -17,6 +17,8 @@ run `docker compose up`
 
 #### Usage
 
+rename `.env.example` file to `.env`  
+
 open `localhost:3000`
 
 enter some numbers  
